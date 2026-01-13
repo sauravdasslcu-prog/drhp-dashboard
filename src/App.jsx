@@ -4,6 +4,26 @@ import { PieChart, Pie, Cell } from "recharts";
 
 const COLORS = ["#4f46e5", "#e5e7eb"];
 
+function findHeaderRow(rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row) continue;
+
+    // Heuristic: header row has "Section" + at least 1 name
+    const textCells = row.filter(
+      (c) => typeof c === "string" && c.trim().length > 0
+    );
+
+    if (
+      textCells.length >= 2 &&
+      row[0]?.toString().toLowerCase().includes("section")
+    ) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 export default function App() {
   const [data, setData] = useState({});
   const [active, setActive] = useState(null);
@@ -18,13 +38,21 @@ export default function App() {
         wb.SheetNames.forEach((sheet) => {
           const rows = XLSX.utils.sheet_to_json(
             wb.Sheets[sheet],
-            { header: 1 }
+            { header: 1, blankrows: false }
           );
 
-          const associates = rows[0].slice(1);
+          const headerRowIndex = findHeaderRow(rows);
+          if (headerRowIndex === -1) return;
 
-          rows.slice(1).forEach((row) => {
+          const headerRow = rows[headerRowIndex];
+          const associates = headerRow.slice(1);
+
+          for (let r = headerRowIndex + 1; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row || !row[0]) continue;
+
             const section = row[0];
+
             associates.forEach((a, i) => {
               if (row[i + 1]) {
                 if (!out[a]) out[a] = {};
@@ -32,7 +60,7 @@ export default function App() {
                 out[a][sheet].push(section);
               }
             });
-          });
+          }
         });
 
         setData(out);
