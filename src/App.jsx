@@ -25,7 +25,19 @@ export default function App() {
             if (!row || row.length < 2) return;
 
             const section = row[0];
-            const associates = row.slice(1).filter(Boolean);
+            const NON_PEOPLE = ["interim", "final", "draft", "review", "status"];
+
+const associates = row
+  .slice(1)
+  .filter(Boolean)
+  .filter((name) => {
+    const n = name.toString().toLowerCase().trim();
+    return (
+      n.length > 2 &&
+      !NON_PEOPLE.some((word) => n.includes(word))
+    );
+  });
+
 
             associates.forEach((name) => {
               if (!out[name]) out[name] = {};
@@ -122,4 +134,5 @@ export default function App() {
     </div>
   );
 }
+
 
